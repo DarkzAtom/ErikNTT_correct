@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selenium Script Interface</title>
+    <script>
+        function runTask(taskId) {
+            fetch(`/run/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        setTimeout(refreshTasks, 1500);
+                    }
+                });
+        }
+
+        function deleteTask(taskId) {
+            fetch(`/delete/${taskId}`)
+                .then(() => {
+                    refreshTasks();
+                });
+        }
+
+        function runAllTasks() {
+            fetch(`/run_all`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        setTimeout(refreshTasks, 1500);
+                    }
+                });
+        }
+
+        function refreshTasks() {
+            fetch(`/tasks`)
+                .then(response => response.json())
+                .then(tasks => {
+                    const taskTableBody = document.getElementById('taskTableBody');
+                    taskTableBody.innerHTML = '';
+                    for (const [taskId, details] of Object.entries(tasks)) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${details.username}</td>
+                            <td>${details.link}</td>
+                            <td>${details.rounds}</td>
+                            <td>${details.show_browser_instance}</td>
+                            <td>
+                                <button onclick="runTask(${taskId})">Run</button>
+                                <button onclick="deleteTask(${taskId})">Delete</button>
+                            </td>
+                        `;
+                        taskTableBody.appendChild(row);
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            refreshTasks();
+        });
+    </script>
+</head>
+<body>
+    <h1>Zefoy Scrape Script Interface</h1>
+    <form action="{{ url_for('prepare') }}" method="post">
+        <label for="tt_link">TikTok Link (don't forget https://):</label>
+        <input type="text" id="tt_link" name="tt_link" required><br>
+        <label for="tt_username">TikTok Username (don't forget @):</label>
+        <input type="text" id="tt_username" name="tt_username" required><br>
+        <label for="rounds">Rounds:</label>
+        <input type="number" id="rounds" name="rounds" required><br>
+        <label for="show_browser_instance">Show Browser Instance:</label>
+        <input type="checkbox" id="show_browser_instance" name="show_browser_instance" checked><br>
+        <button type="submit">Prepare</button>
+    </form>
+
+    <h2>Prepared Tasks</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Link</th>
+                <th>Rounds</th>
+                <th>Show Browser Instance</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="taskTableBody">
+
+        </tbody>
+    </table>
+
+    <br>
+    <button onclick="runAllTasks()">Run All</button>
+</body>
+</html>
